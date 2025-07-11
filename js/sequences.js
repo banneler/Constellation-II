@@ -1,4 +1,4 @@
-// sequences.js
+// js/sequences.js (full updated code)
 import { SUPABASE_URL, SUPABASE_ANON_KEY, parseCsvRow, themes, setupModalListeners, showModal, hideModal } from './shared_constants.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- DOM Element Selectors (Sequences specific) ---
   const logoutBtn = document.getElementById("logout-btn");
-  const debugBtn = document.getElementById("debug-btn");
+  // const debugBtn = document.getElementById("debug-btn"); // REMOVE THIS LINE
   const sequenceList = document.getElementById("sequence-list");
   const addSequenceBtn = document.getElementById("add-sequence-btn");
   const importSequenceBtn = document.getElementById("import-sequence-btn");
@@ -131,10 +131,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "index.html";
   });
 
-  debugBtn.addEventListener("click", () => {
-    console.log(JSON.stringify(state, null, 2));
-    alert("Current app state logged to console (F12).");
-  });
+  // debugBtn.addEventListener("click", () => { // REMOVE THIS LISTENER
+  //   console.log(JSON.stringify(state, null, 2));
+  //   alert("Current app state logged to console (F12).");
+  // });
 
   sequenceList.addEventListener("click", (e) => {
     const item = e.target.closest(".list-item");
