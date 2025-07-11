@@ -1,4 +1,4 @@
-// deals.js
+// js/deals.js (full updated code)
 import { SUPABASE_URL, SUPABASE_ANON_KEY, MONTHLY_QUOTA, formatMonthYear, formatCurrencyK, themes, setupModalListeners, showModal, hideModal } from './shared_constants.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- DOM Element Selectors (Deals specific) ---
   const logoutBtn = document.getElementById("logout-btn");
-  const debugBtn = document.getElementById("debug-btn");
+  // const debugBtn = document.getElementById("debug-btn"); // REMOVE THIS LINE
   const dealsTable = document.getElementById("deals-table");
   const dealsTableBody = document.querySelector("#deals-table tbody");
   const themeToggleBtn = document.getElementById("theme-toggle-btn");
@@ -174,10 +174,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "index.html";
   });
 
-  debugBtn.addEventListener("click", () => {
-    console.log(JSON.stringify(state, null, 2));
-    alert("Current app state logged to console (F12).");
-  });
+  // debugBtn.addEventListener("click", () => { // REMOVE THIS LISTENER
+  //   console.log(JSON.stringify(state, null, 2));
+  //   alert("Current app state logged to console (F12).");
+  // });
 
   dealsTable.querySelector("thead").addEventListener("click", (e) => {
     const th = e.target.closest("th");
