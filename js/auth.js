@@ -1,3 +1,13 @@
+// js/auth.js
+console.log("auth.js script started parsing."); // Add this line at the very beginning
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './shared_constants.js';
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOMContentLoaded fired for auth.js."); // Add this line inside DOMContentLoaded
+
+  // ... rest of your code ...
+});
+
 // shared_constants.js
 export const SUPABASE_URL = "https://pjxcciepfypzrfmlfchj.supabase.co";
 export const SUPABASE_ANON_KEY =
