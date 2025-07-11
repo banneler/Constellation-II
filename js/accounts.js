@@ -164,6 +164,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           accountContactsList.appendChild(li);
         });
 
+  // js/accounts.js (excerpt from renderAccountDetails function)
+
       state.activities
         .filter((act) => act.account_id === account.id)
         .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -173,12 +175,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           li.textContent = `[${formatDate(act.date)}] ${act.type} with ${
             c ? `${c.first_name} ${c.last_name}` : "Unknown"
           }: ${act.description}`;
-          let borderColor = "var(--primary-blue)";
+          let borderColor = "var(--primary-blue)"; // Default color
           const activityTypeLower = act.type.toLowerCase();
           if (activityTypeLower.includes("email")) {
             borderColor = "var(--warning-yellow)";
           } else if (activityTypeLower.includes("call")) {
             borderColor = "var(--completed-color)";
+          } else if (activityTypeLower.includes("meeting")) { // <--- NEW CONDITION ADDED HERE
+            borderColor = "var(--meeting-purple)";          // <--- Uses the new CSS variable
           }
           li.style.borderLeftColor = borderColor;
           accountActivitiesList.appendChild(li);
