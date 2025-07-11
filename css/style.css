@@ -76,12 +76,12 @@ body.theme-green {
   --bg-light: #0a200a;
   --text-light: #00ff41;
   --text-medium: #00b32d;
-  --primary-blue: #00ff41;
-  --danger-red: #00ff41;
+  --primary-blue: #00ff41; /* Override blue with green */
+  --danger-red: #00ff41;   /* Use bright green for danger/delete actions */
   --secondary-gray: #008b25;
   --border-color: #005217;
   --completed-color: #00ff41;
-  --warning-yellow: #00ff41;
+  --warning-yellow: #00ff41; /* Use bright green for warnings */
   --gradient-start: #000000;
   --gradient-end: #020c02;
   --shadow-light: rgba(0, 255, 65, 0.1);
@@ -89,7 +89,7 @@ body.theme-green {
   --shadow-strong: rgba(0, 255, 65, 0.3);
   --font-main: 'Courier New', Courier, monospace;
   --logo-primary-color: var(--text-light);
-  --logo-secondary-color: var(--text-light); /* Changed for better contrast in green theme */
+  --logo-secondary-color: var(--text-medium); /* Use darker green for contrast */
 }
 
 /* --- GLOBAL STYLES --- */
@@ -103,40 +103,34 @@ body {
 }
 
 body.theme-green {
-  text-shadow: 0 0 5px var(--text-light);
-  animation: flicker 0.15s infinite;
+    text-shadow: 0 0 5px var(--text-light);
+    animation: flicker 0.15s infinite;
 }
 
 /* Green theme specific scanlines */
 body.theme-green::before {
-  content: " ";
-  display: block;
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-  z-index: 2;
-  background-size: 100% 4px, 3px 100%;
-  pointer-events: none;
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 2;
+    background-size: 100% 4px, 3px 100%;
+    pointer-events: none;
 }
 
 @keyframes flicker {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.95;
-  }
-  100% {
-    opacity: 1;
-  }
+  0%   { opacity: 1; }
+  50%  { opacity: 0.95; }
+  100% { opacity: 1; }
 }
 
+
 /* --- SVG LOGO STYLES --- */
-.auth-logo,
-.nav-logo {
+.auth-logo, .nav-logo {
   width: 250px;
   height: auto;
   margin-bottom: 20px;
@@ -162,16 +156,6 @@ body.theme-green::before {
   transition: fill 0.3s;
 }
 
-/* --- NEW ADDITION FOR DARK THEME LOGO FIX --- */
-/* Force the specific dark parts of the logo to be white in dark theme */
-/* This directly targets the original fill color in the SVG and overrides it */
-body.theme-dark .nav-logo path[fill="#010101"],
-body.theme-dark .auth-logo path[fill="#010101"] {
-  fill: #FFFFFF !important; /* Explicitly set to white with !important */
-}
-/* --- END NEW ADDITION --- */
-
-
 /* --- MAIN LAYOUT --- */
 .crm-container {
   display: flex;
@@ -193,11 +177,10 @@ body.theme-dark .auth-logo path[fill="#010101"] {
   flex-shrink: 0;
   box-shadow: 4px 0 10px var(--shadow-medium);
   transition: background-color 0.3s, box-shadow 0.3s;
-  overflow: visible; /* Added to ensure SVG is not clipped */
 }
 
 body:not(.theme-green) .nav-sidebar {
-  border-radius: 0 10px 10px 0;
+    border-radius: 0 10px 10px 0;
 }
 
 
@@ -213,7 +196,7 @@ body:not(.theme-green) .nav-sidebar {
   transition: background-color 0.2s, color 0.2s, transform 0.1s;
 }
 body:not(.theme-green) .nav-button {
-  border-radius: 5px;
+    border-radius: 5px;
 }
 
 
@@ -231,7 +214,7 @@ body:not(.theme-green) .nav-button {
 }
 
 body.theme-dark .nav-button.active {
-  background: linear-gradient(45deg, #3a7bd5, #00d2ff);
+   background: linear-gradient(45deg, #3a7bd5, #00d2ff);
 }
 
 /* FIX: Active nav button for Green Theme */
@@ -299,7 +282,7 @@ h4 {
   transition: background-color 0.3s, border-color 0.3s;
 }
 body:not(.theme-green) .item-list {
-  border-radius: 5px;
+    border-radius: 5px;
 }
 
 .list-item {
@@ -321,7 +304,7 @@ body:not(.theme-green) .item-list {
 }
 
 body:not(.theme-green) .list-item.selected {
-  box-shadow: inset 3px 0 0 0 var(--primary-blue);
+    box-shadow: inset 3px 0 0 0 var(--primary-blue);
 }
 
 .list-item:last-child {
@@ -337,7 +320,7 @@ body:not(.theme-green) .list-item.selected {
   transition: background-color 0.3s, box-shadow 0.3s;
 }
 body:not(.theme-green) .details-panel {
-  border-radius: 8px;
+    border-radius: 8px;
 }
 
 .related-info {
@@ -352,7 +335,7 @@ body:not(.theme-green) .details-panel {
   transition: background-color 0.3s, border-color 0.3s;
 }
 body:not(.theme-green) #contact-sequence-status {
-  border-radius: 5px;
+    border-radius: 5px;
 }
 
 /* --- SEQUENCE STATUS & RING CHART --- */
@@ -426,7 +409,7 @@ textarea {
 body:not(.theme-green) input,
 body:not(.theme-green) select,
 body:not(.theme-green) textarea {
-  border-radius: 4px;
+    border-radius: 4px;
 }
 
 input:focus,
@@ -473,7 +456,7 @@ label {
 body:not(.theme-green) .btn-primary,
 body:not(.theme-green) .btn-danger,
 body:not(.theme-green) .btn-secondary {
-  border-radius: 5px;
+    border-radius: 5px;
 }
 
 
@@ -494,16 +477,16 @@ body:not(.theme-green) .btn-secondary {
 
 /* FIX: Button legibility for Green Theme */
 body.theme-green .btn-primary {
-  background-color: var(--secondary-gray);
-  color: var(--text-light);
+    background-color: var(--secondary-gray);
+    color: var(--text-light);
 }
 
 /* FIX: Danger button style for Green Theme */
 body.theme-green .btn-danger {
-  background-color: transparent;
-  border: 1px solid var(--danger-red);
-  color: var(--danger-red);
-  box-shadow: none;
+    background-color: transparent;
+    border: 1px solid var(--danger-red);
+    color: var(--danger-red);
+    box-shadow: none;
 }
 
 
@@ -561,8 +544,8 @@ table {
   transition: background-color 0.3s, box-shadow 0.3s;
 }
 body:not(.theme-green) table {
-  border-radius: 8px;
-  overflow: hidden;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 th,
@@ -581,7 +564,7 @@ th {
 }
 
 body.theme-dark th {
-  background: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
+    background: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
 }
 
 tbody tr:hover {
@@ -659,7 +642,7 @@ table input[type="checkbox"] {
   position: relative;
 }
 body:not(.theme-green) table input[type="checkbox"] {
-  border-radius: 3px;
+    border-radius: 3px;
 }
 
 table input[type="checkbox"]:checked {
@@ -703,11 +686,11 @@ table input[type="checkbox"]:focus {
   box-shadow: 0 8px 25px var(--shadow-strong);
 }
 body:not(.theme-green) .modal-content {
-  border-radius: 10px;
+    border-radius: 10px;
 }
 
 body.theme-dark .modal-content {
-  background: linear-gradient(160deg, var(--bg-medium), var(--bg-dark));
+    background: linear-gradient(160deg, var(--bg-medium), var(--bg-dark));
 }
 
 .modal-buttons {
@@ -745,7 +728,7 @@ ul {
 }
 body:not(.theme-green) #account-activities-list li,
 body:not(.theme-green) #contact-activities-list li {
-  border-radius: 4px;
+    border-radius: 4px;
 }
 
 .sequence-status-icon {
@@ -780,11 +763,11 @@ body:not(.theme-green) #contact-activities-list li {
   transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 body:not(.theme-green) .metric-card {
-  border-radius: 10px;
+    border-radius: 10px;
 }
 
 body.theme-dark .metric-card {
-  background: linear-gradient(160deg, var(--bg-medium), var(--bg-dark));
+    background: linear-gradient(160deg, var(--bg-medium), var(--bg-dark));
 }
 
 .metric-title {
@@ -867,7 +850,7 @@ body.theme-dark .metric-card {
   text-align: center;
 }
 body:not(.theme-green) .auth-box {
-  border-radius: 10px;
+    border-radius: 10px;
 }
 
 .auth-error {
@@ -892,32 +875,28 @@ body:not(.theme-green) .auth-box {
 
 /* Loader Spinner */
 .loader-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
 }
 
 .spinner {
-  border: 8px solid var(--bg-light);
-  border-top: 8px solid var(--primary-blue);
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: spin 1s linear infinite;
+    border: 8px solid var(--bg-light);
+    border-top: 8px solid var(--primary-blue);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
