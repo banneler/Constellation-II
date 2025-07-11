@@ -43,71 +43,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     applyTheme(newTheme);
   }
 
-  // --- Data Fetching ---
-  async function loadAllData() {
-    if (!state.currentUser) return;
-    console.log("loadAllData: Fetching all user data...");
-
-    const userSpecificTables = ["contacts", "accounts", "sequences", "activities", "contact_sequences", "deals"];
-    const publicTables = ["sequence_steps"];
-
-    const userPromises = userSpecificTables.map((table) =>
-      supabase.from(table).select("*").eq("user_id", state.currentUser.id)
-    );
-    const publicPromises = publicTables.map((table) =>
-      supabase.from(table).select("*")
-    );
-
-    const allPromises = [...userPromises, ...publicPromises];
-    const allTableNames = [...userSpecificTables, ...publicTables];
-
-    try {
-      const results = await Promise.allSettled(allPromises);
-      results.forEach((result, index) => {
-        const tableName = allTableNames[index];
-        if (result.status === "fulfilled") {
-          if (result.value.error) {
-            console.error(
-              `loadAllData: Supabase error fetching ${tableName}:`,
-              result.value.error.message
-            );
-            state[tableName] = [];
-          } else {
-            state[tableName] = result.value.data || [];
-          }
-        } else {
-          console.error(`loadAllData: Failed to fetch ${tableName}:`, result.reason);
-          state[tableName] = [];
-        }
-      });
-      console.log("loadAllData: All data fetched. Rendering dashboard.");
-    } catch (error) {
-      console.error("loadAllData: Critical error in loadAllData:", error);
-    } finally {
-      renderDashboard();
-      renderDealsMetrics();
-    }
+  // --- Utility for getting start of local day (NEW) ---
+  function getStartOfLocalDayISO() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to the start of the *local* day
+    return today.toISOString();
   }
 
-  // --- Specific Render Functions for Dashboard ---
-  const renderDashboard = () => {
+  // --- Render Functions (Moved to top as function declarations to avoid ReferenceError) ---
+  function renderDashboard() {
     if (!dashboardTable || !recentActivitiesTable || !allTasksTable) return;
-    console.log("renderDashboard: Starting render process."); // Debug
+    console.log("renderDashboard: Starting render process.");
     dashboardTable.innerHTML = "";
     recentActivitiesTable.innerHTML = "";
     allTasksTable.innerHTML = "";
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    console.log("renderDashboard: Current 'today' date for filtering:", today.toISOString()); // Debug
+    today.setHours(0, 0, 0, 0); // Normalize 'today' to start of local day
+    console.log("renderDashboard: Current 'today' date for filtering (normalized local):", today.toISOString());
 
     const dueSequenceSteps = state.contact_sequences
       .filter(
         (cs) => {
-          const isDue = new Date(cs.next_step_due_date) <= today;
+          const nextStepDate = new Date(cs.next_step_due_date);
+          // Normalize nextStepDate to start of its *local* day for comparison
+          nextStepDate.setHours(0, 0, 0, 0);
+
+          const isDue = nextStepDate <= today;
           const isActive = cs.status === "Active";
-          // Debugging each contact_sequence for filtering
-          if (cs.id === 5) { // Check the specific csId you were testing
-              console.log(`renderDashboard: Checking csId 5 - Due: ${isDue}, Active: ${isActive}, next_step_due_date: ${cs.next_step_due_date}, status: ${cs.status}`);
+
+          // Detailed debugging for the specific contact sequence (csId: 5 from your logs)
+          if (cs.id === 5) {
+              console.log(`renderDashboard: Checking csId 5 -- Raw DB Date: ${cs.next_step_due_date}, Normalized Date for Comparison: ${nextStepDate.toISOString()}, IsDue: ${isDue}, Status: ${cs.status}, IsActive: ${isActive}`);
           }
           return isDue && isActive;
         }
@@ -117,14 +83,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         new Date(a.next_step_due_date) - new Date(b.next_step_due_date)
       );
 
-    console.log("renderDashboard: Number of due sequence steps after filtering:", dueSequenceSteps.length); // Debug
+    console.log("renderDashboard: Number of due sequence steps after filtering:", dueSequenceSteps.length);
     if (dueSequenceSteps.length === 0) {
-        console.log("renderDashboard: No due sequence steps found to display."); // Debug
+        console.log("renderDashboard: No due sequence steps found to display.");
     }
 
-
     dueSequenceSteps.forEach((cs) => {
-        // Your existing rendering logic for dashboardTable
         const contact = state.contacts.find((c) => c.id === cs.contact_id);
         const sequence = state.sequences.find((s) => s.id === cs.sequence_id);
         if (!contact || !sequence) {
@@ -146,26 +110,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         let btnHtml = "";
         const type = step.type.toLowerCase();
         if (type === "email" && contact.email) {
-            btnHtml = `<button class="btn-primary send-email-btn" data-cs-id="${
-                cs.id
-            }" data-contact-id="${contact.id}" data-subject="${encodeURIComponent(
-                step.subject
-            )}" data-message="${encodeURIComponent(
-                step.message
-            )}">Send Email</button>`;
+            btnHtml = `<button class="btn-primary send-email-btn" data-cs-id="${cs.id}" data-contact-id="${contact.id}" data-subject="${encodeURIComponent(step.subject)}" data-message="${encodeURIComponent(step.message)}">Send Email</button>`;
         } else if (type === "linkedin") {
             btnHtml = `<button class="btn-primary linkedin-step-btn" data-id="${cs.id}">Go to LinkedIn</button>`;
         } else {
             btnHtml = `<button class="btn-primary complete-step-btn" data-id="${cs.id}">Complete</button>`;
         }
-        row.innerHTML = `<td>${formatDate(cs.next_step_due_date)}</td><td>${
-            contact.first_name
-        } ${contact.last_name}</td><td>${sequence.name}</td><td>${
-            step.step_number
-        }: ${step.type}</td><td>${desc}</td><td>${btnHtml}</td>`;
+        row.innerHTML = `<td>${formatDate(cs.next_step_due_date)}</td><td>${contact.first_name} ${contact.last_name}</td><td>${sequence.name}</td><td>${step.step_number}: ${step.type}</td><td>${desc}</td><td>${btnHtml}</td>`;
     });
-
-    // ... (rest of renderDashboard for allTasksTable and recentActivitiesTable remains the same) ...
 
     state.contact_sequences
       .filter((cs) => cs.status === "Active")
@@ -180,13 +132,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           state.accounts.find((a) => a.id === contact.account_id) :
           null;
         const row = allTasksTable.insertRow();
-        row.innerHTML = `<td>${formatDate(cs.next_step_due_date)}</td><td>${
-          contact.first_name
-        } ${contact.last_name}</td><td>${
-          account ? account.name : "N/A"
-        }</td><td><button class="btn-secondary revisit-step-btn" data-cs-id="${
-          cs.id
-        }">Revisit Last Step</button></td>`;
+        row.innerHTML = `<td>${formatDate(cs.next_step_due_date)}</td><td>${contact.first_name} ${contact.last_name}</td><td>${account ? account.name : "N/A"}</td><td><button class="btn-secondary revisit-step-btn" data-cs-id="${cs.id}">Revisit Last Step</button></td>`;
       });
 
     state.activities
@@ -198,15 +144,121 @@ document.addEventListener("DOMContentLoaded", async () => {
           state.accounts.find((a) => a.id === contact.account_id) :
           null;
         const row = recentActivitiesTable.insertRow();
-        row.innerHTML = `<td>${formatDate(act.date)}</td><td>${
-          account ? account.name : "N/A"
-        }</td><td>${
-          contact ? `${contact.first_name} ${contact.last_name}` : "N/A"
-        }</td><td>${act.type}: ${act.description}</td>`;
+        row.innerHTML = `<td>${formatDate(act.date)}</td><td>${account ? account.name : "N/A"}</td><td>${contact ? `${contact.first_name} ${contact.last_name}` : "N/A"}</td><td>${act.type}: ${act.description}</td>`;
       });
-  };
+  }
 
-  // ... (rest of renderDealsMetrics and completeStep functions remain the same) ...
+  function renderDealsMetrics() { // Changed to function declaration
+    if (!metricCurrentCommit) return;
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    let currentCommit = 0;
+    let bestCase = 0;
+    let totalFunnel = 0;
+    state.deals.forEach((deal) => {
+      const dealCloseDate = deal.close_month ?
+        new Date(deal.close_month) :
+        null;
+      const isCurrentMonth =
+        dealCloseDate &&
+        dealCloseDate.getMonth() === currentMonth &&
+        dealCloseDate.getFullYear() === currentYear;
+      totalFunnel += deal.mrc || 0;
+      if (isCurrentMonth) {
+        bestCase += deal.mrc || 0;
+        if (deal.is_committed) {
+          currentCommit += deal.mrc || 0;
+        }
+      }
+    });
+    const commitPercentage =
+      MONTHLY_QUOTA > 0 ?
+      ((currentCommit / MONTHLY_QUOTA) * 100).toFixed(1) :
+      0;
+    const bestCasePercentage =
+      MONTHLY_QUOTA > 0 ? ((bestCase / MONTHLY_QUOTA) * 100).toFixed(1) : 0;
+    metricCurrentCommit.textContent = formatCurrencyK(currentCommit);
+    metricBestCase.textContent = formatCurrencyK(bestCase);
+    metricFunnel.textContent = formatCurrencyK(totalFunnel);
+    document.getElementById(
+      "commit-quota-percent"
+    ).textContent = `${commitPercentage}%`;
+    document.getElementById(
+      "best-case-quota-percent"
+    ).textContent = `${bestCasePercentage}%`;
+  }
+
+  async function completeStep(csId) {
+    console.log(`completeStep: Attempting to complete step for csId: ${csId}`);
+    const cs = state.contact_sequences.find((c) => c.id === csId);
+    if (!cs) {
+      console.warn(`completeStep: Contact sequence with ID ${csId} not found.`);
+      return;
+    }
+    const sequence = state.sequences.find((s) => s.id === cs.sequence_id);
+    const contact = state.contacts.find((c) => c.id === cs.contact_id);
+    const step = state.sequence_steps.find(
+      (s) =>
+      s.sequence_id === cs.sequence_id &&
+      s.step_number === cs.current_step_number
+    );
+    if (contact && sequence && step) {
+      console.log("completeStep: Inserting activity...");
+      const { error: activityError } = await supabase.from("activities").insert([{
+        contact_id: contact.id,
+        account_id: contact.account_id,
+        date: new Date().toISOString(),
+        type: `Sequence: ${step.type}`,
+        description: step.subject || step.message || "Completed step",
+        user_id: state.currentUser.id
+      }]);
+      if (activityError) {
+        console.error("completeStep: Error inserting activity:", activityError.message);
+      } else {
+        console.log("completeStep: Activity inserted successfully.");
+      }
+    }
+    const nextStep = state.sequence_steps.find(
+      (s) =>
+      s.sequence_id === cs.sequence_id &&
+      s.step_number === cs.current_step_number + 1
+    );
+
+    if (nextStep) {
+      console.log(`completeStep: Moving to next step (${nextStep.step_number})...`);
+      const { error: updateError } = await supabase
+        .from("contact_sequences")
+        .update({
+          current_step_number: nextStep.step_number,
+          last_completed_date: new Date().toISOString(),
+          next_step_due_date: addDays(
+            new Date(),
+            nextStep.delay_days
+          ).toISOString()
+        })
+        .eq("id", cs.id);
+      if (updateError) {
+        console.error("completeStep: Error updating contact_sequences for next step:", updateError.message);
+      } else {
+        console.log("completeStep: Contact sequence updated for next step successfully.");
+      }
+    } else {
+      console.log("completeStep: No next step found. Setting sequence status to 'Completed'.");
+      const { error: completionError } = await supabase
+        .from("contact_sequences")
+        .update({
+          status: "Completed"
+        })
+        .eq("id", cs.id);
+      if (completionError) {
+        console.error("completeStep: Error setting contact_sequences status to 'Completed':", completionError.message);
+      } else {
+        console.log("completeStep: Contact sequence status set to 'Completed' successfully.");
+      }
+    }
+    console.log("completeStep: Calling loadAllData after step completion.");
+    await loadAllData();
+  }
 
   // --- Event Listener Setup (Dashboard specific) ---
   setupModalListeners();
@@ -236,11 +288,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const contact = state.contacts.find((c) => c.id === contactId);
       if (!contact) return alert("Contact not found.");
       message = message.replace(/{{firstName}}/g, contact.first_name);
-      const mailtoLink = `mailto:${
-        contact.email
-      }?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-        message
-      )}`;
+      const mailtoLink = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
       window.open(mailtoLink, "_blank");
       completeStep(csId);
     } else if (t.classList.contains("linkedin-step-btn")) {
@@ -266,8 +314,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const newStepNumber = Math.max(1, contactSequence.current_step_number - 1);
-    console.log(`Proposed new step number: ${newStepNumber}`);
+    const originalStepNumber = contactSequence.current_step_number;
+    const newStepNumber = Math.max(1, originalStepNumber - 1);
+    console.log(`Proposed new step number: ${newStepNumber} (from original: ${originalStepNumber})`);
 
     showModal(
       "Revisit Step",
@@ -278,7 +327,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           .from("contact_sequences")
           .update({
             current_step_number: newStepNumber,
-            next_step_due_date: new Date().toISOString(),
+            next_step_due_date: getStartOfLocalDayISO(), // <<-- CHANGED THIS LINE
             status: "Active"
           })
           .eq("id", csId)
@@ -289,11 +338,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           alert("Error revisiting step: " + error.message);
         } else {
           console.log("Supabase update successful for revisit:", data);
-          // After successful update and before loadAllData, check the state of the specific CS
-          const updatedCsCheck = state.contact_sequences.find(cs => cs.id === csId);
-          console.log("State of csId 5 BEFORE loadAllData (in memory):", updatedCsCheck); // Debug the in-memory state
+          const updatedCsInMemory = state.contact_sequences.find(cs => cs.id === csId);
+          console.log("State of csId 5 IN-MEMORY BEFORE loadAllData:", updatedCsInMemory);
 
           await loadAllData();
+
+          const updatedCsAfterFetch = state.contact_sequences.find(cs => cs.id === csId);
+          console.log("State of csId 5 AFTER loadAllData (newly fetched):", updatedCsAfterFetch);
+
           alert("Sequence step updated successfully!");
           hideModal();
         }
