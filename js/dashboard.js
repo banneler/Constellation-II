@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const metricBestCase = document.getElementById("metric-best-case");
   const metricFunnel = document.getElementById("metric-funnel");
 
-  // --- Theme Toggle Logic (Duplicated for now, consider a shared module) ---
+  // --- Theme Toggle Logic ---
   let currentThemeIndex = 0;
   function applyTheme(themeName) {
     if (!themeNameSpan) return;
@@ -46,6 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // --- Data Fetching ---
   async function loadAllData() {
     if (!state.currentUser) return;
+    console.log("loadAllData: Fetching all user data..."); // Debugging load data start
 
     const userSpecificTables = ["contacts", "accounts", "sequences", "activities", "contact_sequences", "deals"];
     const publicTables = ["sequence_steps"];
@@ -67,7 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (result.status === "fulfilled") {
           if (result.value.error) {
             console.error(
-              `Supabase error fetching ${tableName}:`,
+              `loadAllData: Supabase error fetching ${tableName}:`,
               result.value.error.message
             );
             state[tableName] = [];
@@ -75,15 +76,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             state[tableName] = result.value.data || [];
           }
         } else {
-          console.error(`Failed to fetch ${tableName}:`, result.reason);
+          console.error(`loadAllData: Failed to fetch ${tableName}:`, result.reason);
           state[tableName] = [];
         }
       });
+      console.log("loadAllData: All data fetched. Rendering dashboard."); // Debugging load data end
     } catch (error) {
-      console.error("Critical error in loadAllData:", error);
+      console.error("loadAllData: Critical error in loadAllData:", error);
     } finally {
       renderDashboard();
-      renderDealsMetrics(); // Dashboard also has deal metrics
+      renderDealsMetrics();
     }
   }
 
@@ -219,8 +221,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   async function completeStep(csId) {
+    console.log(`completeStep: Attempting to complete step for csId: ${csId}`); // Debugging start
     const cs = state.contact_sequences.find((c) => c.id === csId);
-    if (!cs) return;
+    if (!cs) {
+      console.warn(`completeStep: Contact sequence with ID ${csId} not found.`);
+      return;
+    }
     const sequence = state.sequences.find((s) => s.id === cs.sequence_id);
     const contact = state.contacts.find((c) => c.id === cs.contact_id);
     const step = state.sequence_steps.find(
@@ -229,22 +235,30 @@ document.addEventListener("DOMContentLoaded", async () => {
       s.step_number === cs.current_step_number
     );
     if (contact && sequence && step) {
-      await supabase.from("activities").insert([{
+      console.log("completeStep: Inserting activity..."); // Debugging activity insert
+      const { error: activityError } = await supabase.from("activities").insert([{
         contact_id: contact.id,
         account_id: contact.account_id,
         date: new Date().toISOString(),
         type: `Sequence: ${step.type}`,
         description: step.subject || step.message || "Completed step",
-        user_id: state.currentUser.id // Make sure user_id is added here
+        user_id: state.currentUser.id
       }]);
+      if (activityError) {
+        console.error("completeStep: Error inserting activity:", activityError.message);
+      } else {
+        console.log("completeStep: Activity inserted successfully.");
+      }
     }
     const nextStep = state.sequence_steps.find(
       (s) =>
       s.sequence_id === cs.sequence_id &&
       s.step_number === cs.current_step_number + 1
     );
+
     if (nextStep) {
-      await supabase
+      console.log(`completeStep: Moving to next step (${nextStep.step_number})...`); // Debugging next step
+      const { error: updateError } = await supabase
         .from("contact_sequences")
         .update({
           current_step_number: nextStep.step_number,
@@ -255,14 +269,26 @@ document.addEventListener("DOMContentLoaded", async () => {
           ).toISOString()
         })
         .eq("id", cs.id);
+      if (updateError) {
+        console.error("completeStep: Error updating contact_sequences for next step:", updateError.message);
+      } else {
+        console.log("completeStep: Contact sequence updated for next step successfully.");
+      }
     } else {
-      await supabase
+      console.log("completeStep: No next step found. Setting sequence status to 'Completed'."); // Debugging completion
+      const { error: completionError } = await supabase
         .from("contact_sequences")
         .update({
           status: "Completed"
         })
         .eq("id", cs.id);
+      if (completionError) {
+        console.error("completeStep: Error setting contact_sequences status to 'Completed':", completionError.message);
+      } else {
+        console.log("completeStep: Contact sequence status set to 'Completed' successfully.");
+      }
     }
+    console.log("completeStep: Calling loadAllData after step completion."); // Debugging loadAllData call
     await loadAllData();
   }
 
@@ -310,35 +336,49 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   allTasksTable.addEventListener("click", async (e) => {
     const targetButton = e.target.closest(".revisit-step-btn");
-    if (targetButton) {
-      const csId = Number(targetButton.dataset.csId);
-      const contactSequence = state.contact_sequences.find(
-        (cs) => cs.id === csId
-      );
-      if (contactSequence) {
-        const newStepNumber = Math.max(
-          1,
-          contactSequence.current_step_number - 1
-        );
-        showModal(
-          "Revisit Step",
-          `Are you sure you want to revisit step ${newStepNumber} for this sequence?`,
-          async () => {
-            await supabase
-              .from("contact_sequences")
-              .update({
-                current_step_number: newStepNumber,
-                next_step_due_date: new Date().toISOString(),
-                status: "Active"
-              })
-              .eq("id", csId);
-            await loadAllData();
-            alert("Sequence step updated successfully!");
-            hideModal();
-          }
-        );
-      }
+    if (!targetButton) {
+      console.log("Revisit button not clicked or target is null."); // Debug
+      return;
     }
+    const csId = Number(targetButton.dataset.csId);
+    console.log(`Revisit button clicked for csId: ${csId}`); // Debug
+    const contactSequence = state.contact_sequences.find(
+      (cs) => cs.id === csId
+    );
+    if (!contactSequence) {
+      console.warn(`Contact sequence with ID ${csId} not found in state.`); // Debug
+      return;
+    }
+
+    const newStepNumber = Math.max(1, contactSequence.current_step_number - 1);
+    console.log(`Proposed new step number: ${newStepNumber}`); // Debug
+
+    showModal(
+      "Revisit Step",
+      `Are you sure you want to revisit step ${newStepNumber} for this sequence?`,
+      async () => { // <--- This is the onConfirm callback
+        console.log("Modal confirmed. Attempting Supabase update for revisit..."); // Debug
+        const { data, error } = await supabase
+          .from("contact_sequences")
+          .update({
+            current_step_number: newStepNumber,
+            next_step_due_date: new Date().toISOString(),
+            status: "Active"
+          })
+          .eq("id", csId)
+          .select(); // Added .select() to get data back if successful
+
+        if (error) {
+          console.error("Supabase error revisiting step:", error.message); // Crucial error log
+          alert("Error revisiting step: " + error.message);
+        } else {
+          console.log("Supabase update successful for revisit:", data); // Success log with data
+          await loadAllData(); // Reload all data after successful update
+          alert("Sequence step updated successfully!");
+          hideModal();
+        }
+      }
+    );
   });
 
   // --- App Initialization (Dashboard Page) ---
@@ -353,7 +393,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     state.currentUser = session.user;
     await loadAllData();
   } else {
-    // If no session, redirect to auth page
-    window.location.href = "index.html";
+    window.location.href = "index.html"; // Redirect to auth page if not signed in
   }
 });
