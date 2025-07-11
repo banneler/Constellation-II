@@ -1,4 +1,4 @@
-// js/dashboard.js
+// js/dashboard.js (full updated code)
 import { SUPABASE_URL, SUPABASE_ANON_KEY, MONTHLY_QUOTA, formatDate, formatCurrencyK, addDays, themes, setupModalListeners, showModal, hideModal } from './shared_constants.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- DOM Element Selectors (Dashboard specific) ---
   const logoutBtn = document.getElementById("logout-btn");
-  const debugBtn = document.getElementById("debug-btn");
+  // const debugBtn = document.getElementById("debug-btn"); // REMOVE THIS LINE
   const dashboardTable = document.querySelector("#dashboard-table tbody");
   const recentActivitiesTable = document.querySelector("#recent-activities-table tbody");
   const allTasksTable = document.querySelector("#all-tasks-table tbody");
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // --- Data Fetching Function ---
-  async function loadAllData() { // This function must be defined here!
+  async function loadAllData() {
     if (!state.currentUser) return;
     console.log("loadAllData: Fetching all user data...");
 
@@ -194,7 +194,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
   }
 
-  function renderDealsMetrics() { // This function must be defined here!
+  function renderDealsMetrics() {
     if (!metricCurrentCommit) return;
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
@@ -316,10 +316,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "index.html";
   });
 
-  debugBtn.addEventListener("click", () => {
-    console.log(JSON.stringify(state, null, 2));
-    alert("Current app state logged to console (F12).");
-  });
+  // debugBtn.addEventListener("click", () => { // REMOVE THIS LISTENER
+  //   console.log(JSON.stringify(state, null, 2));
+  //   alert("Current app state logged to console (F12).");
+  // });
 
   dashboardTable.addEventListener("click", async (e) => {
     const t = e.target.closest("button");
@@ -373,7 +373,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           .from("contact_sequences")
           .update({
             current_step_number: newStepNumber,
-            next_step_due_date: getStartOfLocalDayISO(), // <<-- Uses the new utility function
+            next_step_due_date: getStartOfLocalDayISO(), // Uses the new utility function
             status: "Active"
           })
           .eq("id", csId)
