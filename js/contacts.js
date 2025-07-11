@@ -1,4 +1,4 @@
-// contacts.js
+// js/contacts.js (full updated code)
 import { SUPABASE_URL, SUPABASE_ANON_KEY, formatDate, parseCsvRow, themes, setupModalListeners, showModal, hideModal } from './shared_constants.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- DOM Element Selectors (Contacts specific) ---
   const logoutBtn = document.getElementById("logout-btn");
-  const debugBtn = document.getElementById("debug-btn");
+  // const debugBtn = document.getElementById("debug-btn"); // REMOVE THIS LINE
   const contactList = document.getElementById("contact-list");
   const contactForm = document.getElementById("contact-form");
   const contactSearch = document.getElementById("contact-search");
@@ -118,10 +118,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         (cs) => cs.contact_id === contact.id && cs.status === "Active"
       );
       item.innerHTML = `${contact.first_name} ${contact.last_name} ${
-          inActiveSequence
-            ? '<span class="sequence-status-icon" style="color: var(--completed-color);">🔄</span>'
-            : ""
-        }`;
+           inActiveSequence
+             ? '<span class="sequence-status-icon" style="color: var(--completed-color);">🔄</span>'
+             : ""
+         }`;
       item.dataset.id = contact.id;
       if (contact.id === state.selectedContactId)
         item.classList.add("selected");
@@ -165,9 +165,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       accountDropdown.value = contact.account_id || "";
 
       contactActivitiesList.innerHTML = "";
-      // js/contacts.js (excerpt from renderContactDetails function)
-
-      contactActivitiesList.innerHTML = "";
       state.activities
         .filter((act) => act.contact_id === contact.id)
         .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -182,8 +179,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             borderColor = "var(--warning-yellow)";
           } else if (activityTypeLower.includes("call")) {
             borderColor = "var(--completed-color)";
-          } else if (activityTypeLower.includes("meeting")) { // <--- NEW CONDITION ADDED HERE
-            borderColor = "var(--meeting-purple)";          // <--- Uses the new CSS variable
+          } else if (activityTypeLower.includes("meeting")) { // NEW CONDITION ADDED HERE
+            borderColor = "var(--meeting-purple)";          // Uses the new CSS variable
           }
           li.style.borderLeftColor = borderColor;
           contactActivitiesList.appendChild(li);
@@ -236,10 +233,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "index.html"; // Redirect to auth page after logout
   });
 
-  debugBtn.addEventListener("click", () => {
-    console.log(JSON.stringify(state, null, 2));
-    alert("Current app state logged to console (F12).");
-  });
+  // debugBtn.addEventListener("click", () => { // REMOVE THIS LISTENER
+  //   console.log(JSON.stringify(state, null, 2));
+  //   alert("Current app state logged to console (F12).");
+  // });
 
   contactSearch.addEventListener("input", renderContactList);
 
