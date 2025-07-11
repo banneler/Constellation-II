@@ -1,4 +1,4 @@
-// accounts.js
+// js/accounts.js (full updated code)
 import { SUPABASE_URL, SUPABASE_ANON_KEY, formatDate, formatMonthYear, parseCsvRow, themes, setupModalListeners, showModal, hideModal } from './shared_constants.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- DOM Element Selectors (Accounts specific) ---
   const logoutBtn = document.getElementById("logout-btn");
-  const debugBtn = document.getElementById("debug-btn");
+  // const debugBtn = document.getElementById("debug-btn"); // REMOVE THIS LINE
   const accountList = document.getElementById("account-list");
   const addAccountBtn = document.getElementById("add-account-btn");
   const bulkImportAccountsBtn = document.getElementById("bulk-import-accounts-btn");
@@ -164,8 +164,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           accountContactsList.appendChild(li);
         });
 
-  // js/accounts.js (excerpt from renderAccountDetails function)
-
       state.activities
         .filter((act) => act.account_id === account.id)
         .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -175,14 +173,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           li.textContent = `[${formatDate(act.date)}] ${act.type} with ${
             c ? `${c.first_name} ${c.last_name}` : "Unknown"
           }: ${act.description}`;
-          let borderColor = "var(--primary-blue)"; // Default color
+          let borderColor = "var(--primary-blue)";
           const activityTypeLower = act.type.toLowerCase();
           if (activityTypeLower.includes("email")) {
             borderColor = "var(--warning-yellow)";
           } else if (activityTypeLower.includes("call")) {
             borderColor = "var(--completed-color)";
-          } else if (activityTypeLower.includes("meeting")) { // <--- NEW CONDITION ADDED HERE
-            borderColor = "var(--meeting-purple)";          // <--- Uses the new CSS variable
+          } else if (activityTypeLower.includes("meeting")) { // NEW CONDITION ADDED HERE
+            borderColor = "var(--meeting-purple)";          // Uses the new CSS variable
           }
           li.style.borderLeftColor = borderColor;
           accountActivitiesList.appendChild(li);
@@ -204,10 +202,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "index.html";
   });
 
-  debugBtn.addEventListener("click", () => {
-    console.log(JSON.stringify(state, null, 2));
-    alert("Current app state logged to console (F12).");
-  });
+  // debugBtn.addEventListener("click", () => { // REMOVE THIS LISTENER
+  //   console.log(JSON.stringify(state, null, 2));
+  //   alert("Current app state logged to console (F12).");
+  // });
 
   addAccountBtn.addEventListener("click", async () => {
     showModal(
@@ -393,16 +391,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  accountContactsList.addEventListener("click", (e) => {
-    const targetLink = e.target.closest(".contact-name-link");
-    if (targetLink) {
-      const contactId = Number(targetLink.dataset.contactId);
-      if (contactId) {
-        // Navigate to the contacts page with the contactId as a query parameter
-        window.location.href = `contacts.html?contactId=${contactId}`;
+  document.getElementById("account-contacts-list")
+    .addEventListener("click", (e) => {
+      const targetLink = e.target.closest(".contact-name-link");
+      if (targetLink) {
+        const contactId = Number(targetLink.dataset.contactId);
+        if (contactId) {
+          // Navigate to the contacts page with the contactId as a query parameter
+          window.location.href = `contacts.html?contactId=${contactId}`;
+        }
       }
-    }
-  });
+    });
 
   // --- App Initialization (Accounts Page) ---
   const savedTheme = localStorage.getItem('crm-theme') || 'dark';
