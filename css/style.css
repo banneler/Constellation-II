@@ -88,8 +88,8 @@ body.theme-green {
   --shadow-medium: rgba(0, 255, 65, 0.2);
   --shadow-strong: rgba(0, 255, 65, 0.3);
   --font-main: 'Courier New', Courier, monospace;
-  --logo-primary-color: var(--text-light); /* Inner constellation will be bright green */
-  --logo-secondary-color: var(--bg-dark);  /* OUTER C/TEXT will blend with dark background */
+  --logo-primary-color: var(--text-medium); /* CHANGED: Inner constellation to text-medium (darker green) */
+  --logo-secondary-color: var(--bg-dark);  /* Outer C/text blends with dark background (kept this) */
 }
 
 /* --- GLOBAL STYLES --- */
