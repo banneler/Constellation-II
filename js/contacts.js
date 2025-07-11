@@ -165,6 +165,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       accountDropdown.value = contact.account_id || "";
 
       contactActivitiesList.innerHTML = "";
+      // js/contacts.js (excerpt from renderContactDetails function)
+
+      contactActivitiesList.innerHTML = "";
       state.activities
         .filter((act) => act.contact_id === contact.id)
         .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -173,12 +176,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           li.textContent = `[${formatDate(act.date)}] ${act.type}: ${
             act.description
           }`;
-          let borderColor = "var(--primary-blue)";
+          let borderColor = "var(--primary-blue)"; // Default color
           const activityTypeLower = act.type.toLowerCase();
           if (activityTypeLower.includes("email")) {
             borderColor = "var(--warning-yellow)";
           } else if (activityTypeLower.includes("call")) {
             borderColor = "var(--completed-color)";
+          } else if (activityTypeLower.includes("meeting")) { // <--- NEW CONDITION ADDED HERE
+            borderColor = "var(--meeting-purple)";          // <--- Uses the new CSS variable
           }
           li.style.borderLeftColor = borderColor;
           contactActivitiesList.appendChild(li);
