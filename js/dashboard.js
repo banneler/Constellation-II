@@ -1,4 +1,4 @@
-// dashboard.js
+// js/dashboard.js
 import { SUPABASE_URL, SUPABASE_ANON_KEY, MONTHLY_QUOTA, formatDate, formatCurrencyK, addDays, themes, setupModalListeners, showModal, hideModal } from './shared_constants.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -43,14 +43,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     applyTheme(newTheme);
   }
 
-  // --- Utility for getting start of local day (NEW) ---
+  // --- Utility for getting start of local day ---
   function getStartOfLocalDayISO() {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Set to the start of the *local* day
     return today.toISOString();
   }
 
-  // --- Render Functions (Moved to top as function declarations to avoid ReferenceError) ---
+  // --- Data Fetching Function ---
+  async function loadAllData() { // This function must be defined here!
+    if (!state.currentUser) return;
+    console.log("loadAllData: Fetching all user data...");
+
+    const userSpecificTables = ["contacts", "accounts", "sequences", "activities", "contact_sequences", "deals"];
+    const publicTables = ["sequence_steps"];
+
+    const userPromises = userSpecificTables.map((table) =>
+      supabase.from(table).select("*").eq("user_id", state.currentUser.id)
+    );
+    const publicPromises = publicTables.map((table) =>
+      supabase.from(table).select("*")
+    );
+
+    const allPromises = [...userPromises, ...publicPromises];
+    const allTableNames = [...userSpecificTables, ...publicTables];
+
+    try {
+      const results = await Promise.allSettled(allPromises);
+      results.forEach((result, index) => {
+        const tableName = allTableNames[index];
+        if (result.status === "fulfilled") {
+          if (result.value.error) {
+            console.error(
+              `loadAllData: Supabase error fetching ${tableName}:`,
+              result.value.error.message
+            );
+            state[tableName] = [];
+          } else {
+            state[tableName] = result.value.data || [];
+          }
+        } else {
+          console.error(`loadAllData: Failed to fetch ${tableName}:`, result.reason);
+          state[tableName] = [];
+        }
+      });
+      console.log("loadAllData: All data fetched. Calling render functions.");
+    } catch (error) {
+      console.error("loadAllData: Critical error in loadAllData:", error);
+    } finally {
+      renderDashboard();
+      renderDealsMetrics();
+    }
+  }
+
+  // --- Render Functions (Defined as function declarations to ensure hoisting) ---
   function renderDashboard() {
     if (!dashboardTable || !recentActivitiesTable || !allTasksTable) return;
     console.log("renderDashboard: Starting render process.");
@@ -148,7 +194,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
   }
 
-  function renderDealsMetrics() { // Changed to function declaration
+  function renderDealsMetrics() { // This function must be defined here!
     if (!metricCurrentCommit) return;
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
@@ -327,7 +373,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           .from("contact_sequences")
           .update({
             current_step_number: newStepNumber,
-            next_step_due_date: getStartOfLocalDayISO(), // <<-- CHANGED THIS LINE
+            next_step_due_date: getStartOfLocalDayISO(), // <<-- Uses the new utility function
             status: "Active"
           })
           .eq("id", csId)
@@ -363,8 +409,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
     state.currentUser = session.user;
-    await loadAllData();
+    await loadAllData(); // Initial data load on page entry
   } else {
-    window.location.href = "index.html";
+    window.location.href = "index.html"; // Redirect if not signed in
   }
 });
