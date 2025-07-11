@@ -1,93 +1,89 @@
-// js/auth.js
-console.log("auth.js script started parsing."); // Add this line at the very beginning
+// auth.js
+console.log("auth.js script started parsing.");
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './shared_constants.js';
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOMContentLoaded fired for auth.js."); // Add this line inside DOMContentLoaded
+  console.log("DOMContentLoaded fired for auth.js.");
 
-  // ... rest of your code ...
-});
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// shared_constants.js
-export const SUPABASE_URL = "https://pjxcciepfypzrfmlfchj.supabase.co";
-export const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqeGNjaWVwZnlwenJmbWxmY2hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxMTU4NDQsImV4cCI6MjA2NzY5MTg0NH0.m_jyE0e4QFevI-mGJHYlGmA12lXf8XoMDoiljUav79c";
+  // --- DOM Element Selectors (Auth specific) ---
+  const authContainer = document.getElementById("auth-container");
+  const authForm = document.getElementById("auth-form");
+  const authTitle = document.getElementById("auth-title");
+  const authError = document.getElementById("auth-error");
+  const authEmailInput = document.getElementById("auth-email");
+  const authPasswordInput = document.getElementById("auth-password");
+  const authSubmitBtn = document.getElementById("auth-submit-btn");
+  const authToggleLink = document.getElementById("auth-toggle-link");
 
-export const MONTHLY_QUOTA = 5000;
-export const themes = ['dark', 'light', 'green'];
+  // Debugging console logs for element selection
+  console.log("Auth Container:", authContainer);
+  console.log("Auth Form:", authForm);
+  console.log("Auth Email Input:", authEmailInput);
+  console.log("Auth Password Input:", authPasswordInput);
+  console.log("Auth Submit Button:", authSubmitBtn);
+  console.log("Auth Toggle Link:", authToggleLink);
 
-export const formatDate = (ds) => (ds ? new Date(ds).toLocaleString() : "");
-export const formatMonthYear = (ds) => {
-  if (!ds) return "";
-  const date = new Date(ds);
-  const adjustedDate = new Date(
-    date.getTime() + date.getTimezoneOffset() * 60000
-  );
-  return adjustedDate.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long"
+  let isLoginMode = true;
+
+  // --- Event Listener Setup (Auth specific) ---
+  authToggleLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    console.log("Toggle link clicked."); // Debugging log
+    isLoginMode = !isLoginMode;
+    authTitle.textContent = isLoginMode ? "Login" : "Sign Up";
+    authSubmitBtn.textContent = isLoginMode ? "Login" : "Sign Up";
+    authToggleLink.textContent = isLoginMode ?
+      "Need an account? Sign Up" :
+      "Have an account? Login";
+    authError.textContent = "";
   });
-};
-export const formatCurrencyK = (value) => {
-  if (value === null || isNaN(value)) return "$0.0K";
-  const valInK = value / 1000;
-  return `$${valInK.toFixed(1)}K`;
-};
-export const addDays = (d, days) => {
-  const r = new Date(d);
-  r.setDate(r.getDate() + days);
-  return r;
-};
-export const parseCsvRow = (row) => {
-  const r = [];
-  let c = "";
-  let i = false;
-  for (let h = 0; h < row.length; h++) {
-    const a = row[h];
-    if (a === '"') {
-      i = !i;
-    } else if (a === "," && !i) {
-      r.push(c.trim());
-      c = "";
+
+  // Debugging log for listener attachment
+  console.log("Attaching form submit listener to:", authForm);
+  authForm.addEventListener("submit", async (e) => {
+    e.preventDefault(); // IMPORTANT: This stops the default form submission (page reload)
+    console.log("Auth form submitted!"); // Debugging log
+    const email = authEmailInput.value;
+    const password = authPasswordInput.value;
+    authError.textContent = "";
+
+    console.log("Attempting auth with email:", email); // Debugging log
+
+    const {
+      error
+    } = isLoginMode ?
+      await supabase.auth.signInWithPassword({
+        email,
+        password
+      }) :
+      await supabase.auth.signUp({
+        email,
+        password
+      });
+
+    if (error) {
+      console.error("Supabase Auth Error:", error.message); // Debugging log for Supabase errors
+      authError.textContent = error.message;
+    } else if (!isLoginMode) {
+      console.log("Sign up successful. Check email for confirmation."); // Debugging log
+      authError.textContent = "Check your email for a confirmation link!";
     } else {
-      c += a;
+      console.log("Login successful. Redirecting to dashboard.html."); // Debugging log
+      authForm.reset();
+      window.location.href = "dashboard.html";
     }
-  }
-  r.push(c.trim());
-  return r;
-};
+  });
 
-// Modal functions (can also be moved here)
-let onConfirmCallback = null;
-export const showModal = (title, bodyHtml, onConfirm) => {
-  const modalTitle = document.getElementById("modal-title");
-  const modalBody = document.getElementById("modal-body");
-  const modalBackdrop = document.getElementById("modal-backdrop");
-
-  if (!modalTitle || !modalBody || !modalBackdrop) {
-      console.error("Modal elements not found!");
-      return;
-  }
-  modalTitle.textContent = title;
-  modalBody.innerHTML = bodyHtml;
-  onConfirmCallback = onConfirm;
-  modalBackdrop.classList.remove("hidden");
-};
-export const hideModal = () => {
-  const modalBackdrop = document.getElementById("modal-backdrop");
-  if (modalBackdrop) modalBackdrop.classList.add("hidden");
-  onConfirmCallback = null;
-};
-export const setupModalListeners = () => {
-    const modalConfirmBtn = document.getElementById("modal-confirm-btn");
-    const modalCancelBtn = document.getElementById("modal-cancel-btn");
-    if (modalConfirmBtn) {
-        modalConfirmBtn.addEventListener(
-            "click",
-            () => onConfirmCallback && onConfirmCallback()
-        );
+  // --- App Initialization (Auth Page) ---
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log("Auth event fired on auth page:", event); // Debugging log for auth state changes
+    if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
+      // If already signed in, redirect to dashboard
+      console.log("User is signed in or has an initial session. Redirecting."); // Debugging log
+      window.location.href = "dashboard.html";
     }
-    if (modalCancelBtn) {
-        modalCancelBtn.addEventListener("click", hideModal);
-    }
-};
+    // If signed out, ensure auth container is visible (already the default state for this page)
+  });
+});
