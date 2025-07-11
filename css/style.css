@@ -21,6 +21,7 @@
   --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --logo-primary-color: var(--primary-blue);
   --logo-secondary-color: var(--text-light);
+  --meeting-purple: #8A2BE2; /* New: A default moderate purple */
 }
 
 /* Dark Theme */
@@ -44,6 +45,7 @@ body.theme-dark {
   --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --logo-primary-color: var(--primary-blue);
   --logo-secondary-color: var(--text-light);
+  --meeting-purple: #8A2BE2; /* Dark theme purple */
 }
 
 /* Light Theme */
@@ -67,6 +69,7 @@ body.theme-light {
   --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --logo-primary-color: var(--primary-blue);
   --logo-secondary-color: var(--text-light);
+  --meeting-purple: #6A0DAD; /* Light theme purple (maybe a bit darker for contrast) */
 }
 
 /* Green Screen Theme */
@@ -88,8 +91,9 @@ body.theme-green {
   --shadow-medium: rgba(0, 255, 65, 0.2);
   --shadow-strong: rgba(0, 255, 65, 0.3);
   --font-main: 'Courier New', Courier, monospace;
-  --logo-primary-color: var(--text-medium); /* CHANGED: Inner constellation to text-medium (darker green) */
-  --logo-secondary-color: var(--bg-light);  /* Outer C/text blends with dark background (kept this) */
+  --logo-primary-color: var(--text-medium); /* Inner constellation to text-medium (darker green) */
+  --logo-secondary-color: var(--bg-dark);  /* Outer C/text blends with dark background */
+  --meeting-purple: #9400D3; /* Green theme purple (using a shade that stands out against green) */
 }
 
 /* --- GLOBAL STYLES --- */
@@ -162,7 +166,7 @@ body.theme-green::before {
   transition: fill 0.3s;
 }
 
-/* --- FIX FOR DARK THEME LOGO (from previous step) --- */
+/* --- FIX FOR DARK THEME LOGO --- */
 /* Force the specific dark parts of the logo to be white in dark theme */
 body.theme-dark .nav-logo path[fill="#010101"],
 body.theme-dark .auth-logo path[fill="#010101"] {
@@ -192,7 +196,7 @@ body.theme-dark .auth-logo path[fill="#010101"] {
   flex-shrink: 0;
   box-shadow: 4px 0 10px var(--shadow-medium);
   transition: background-color 0.3s, box-shadow 0.3s;
-  overflow: visible; /* Added to ensure SVG is not clipped */
+  overflow: visible; /* Ensures SVG is not clipped */
 }
 
 body:not(.theme-green) .nav-sidebar {
@@ -747,13 +751,45 @@ body:not(.theme-green) #contact-activities-list li {
   border-radius: 4px;
 }
 
-.sequence-status-icon {
+.sequence-status-icon { /* This was for the old 🔄 icon, can be adjusted or kept for general styling */
   color: var(--completed-color) !important;
   font-size: 12px;
   margin-left: 8px;
   display: inline-block;
   vertical-align: middle;
 }
+
+/* New SVG icon styling (from earlier attempt) */
+.sequence-status-icon-svg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 5px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.sequence-status-icon-svg-inner {
+  width: 100%;
+  height: 100%;
+  color: var(--completed-color);
+}
+
+/* If you want different color for the dollar sign based on theme */
+body.theme-dark .sequence-status-icon-svg-inner {
+    color: var(--completed-color);
+}
+
+body.theme-light .sequence-status-icon-svg-inner {
+    color: var(--completed-color);
+}
+
+body.theme-green .sequence-status-icon-svg-inner {
+    color: var(--text-light);
+}
+
 
 /* --- DEALS METRICS --- */
 .deals-metrics-container {
